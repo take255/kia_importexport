@@ -22,11 +22,8 @@ from bpy.types import(
     )
 
 from bpy.props import(
-    PointerProperty,
-    IntProperty,
-    BoolProperty,
-    StringProperty,
-    CollectionProperty
+    FloatProperty,
+    PointerProperty
     )
 
 from . import utils
@@ -43,6 +40,11 @@ bl_info = {
 "blender": (2, 80, 0),
 "description": "kia_importexport",
 "category": "Object"}
+
+PATH = 'E:/data/blender_ref/pickle/'
+
+MODEL_NAME = 'model.dat'
+BONE_NAME = 'bonedata.dat'
 
 
 class Import_Export(bpy.types.Operator):
@@ -65,18 +67,9 @@ class Import_Export(bpy.types.Operator):
         f.close()
 
         
-
 class KIAIMPORTEXPORT_Props_OA(PropertyGroup):
-    #アプライオプション
-    mesh_scale : FloatProperty(name="scale",min=0.001,default=1.0)
-    bone_scale : FloatProperty(name="scale",min=0.001,default=1.0)
+    scale : FloatProperty(name="scale",min=0.001,default=1.0)
 
-    # bpy.types.Scene.export_selected_mesh_scale = FloatProperty(
-    #     name = "スケール",
-    #     description = "スケール",
-    #     min=0.001,
-    #     max=1000.0,
-    #     default=1.0)
 
 class KIAIMPORTEXPORT_PT_ui(utils.panel):
     bl_label = "kiaimportexport"
@@ -85,74 +78,90 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
         return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
-        self.ui( "mesh" , "kiaimportexport.mesh_export" , "kiaimportexport.mesh_import" , "mesh_scale")
-        self.ui( "weight" , "kiaimportexport.weight_export" , "kiaimportexport.weight_import" , False)
-        self.ui( "bone" , "kiaimportexport.bone_export" , "kiaimportexport.bone_import", "bone_scale")
+        props = bpy.context.scene.kiaimportexport_props        
 
-    def ui(self , name , oncmd ,offcmd ,scale ):
-        props = bpy.context.scene.kiatools_oa        
-        box = self.layout.box()
+        col = self.layout.column()
+        self.row = col.row()
+        self.ui( "mesh" , "kiaimportexport.mesh_export" , "kiaimportexport.mesh_import" )
+        self.ui( "weight" , "kiaimportexport.weight_export" , "kiaimportexport.weight_import" )
+        self.ui( "bone" , "kiaimportexport.bone_export" , "kiaimportexport.bone_import")
+
+        # if scale != False:
+        col.prop(props, 'scale', icon='BLENDER', toggle=True)
+
+
+    def ui(self , name , oncmd ,offcmd ):
+        box = self.row.box()
         box.label( text = name )
 
         row = box.row(align=True)
-        row.operator( oncmd , icon = 'COPYDOWN')
-        row.operator( offcmd, icon = 'PASTEDOWN')
-        if scale != False:
-            row.prop(props, scale, icon='BLENDER', toggle=True)
+        row.operator( offcmd, icon = 'COPYDOWN')
+        row.operator( oncmd , icon = 'PASTEDOWN')
+
+        # if scale != False:
+        #     row.prop(props, scale, icon='BLENDER', toggle=True)
 
 
 class KIAIMPORTEXPORT_mesh_export(Import_Export):
     """メッシュ情報をエクスポート"""
     bl_idname = "kiaimportexport.mesh_export"
     bl_label = ""
-    filename = MODEL_NAME
     def execute(self, context):
+        cmd.mesh_export( MODEL_NAME )
         return {'FINISHED'}        
 
 class KIAIMPORTEXPORT_mesh_import(Import_Export):
     """メッシュ情報をインポート"""
     bl_idname = "kiaimportexport.mesh_import"
     bl_label = ""
-    filename = MODEL_NAME
     def execute(self, context):
+        cmd.mesh_import( MODEL_NAME )
         return {'FINISHED'}        
 
 class KIAIMPORTEXPORT_weight_export(Import_Export):
     """ウェイト情報をエクスポート"""
     bl_idname = "kiaimportexport.weight_export"
     bl_label = ""
-    filename = MODEL_NAME
     def execute(self, context):
+        cmd.weight_export()
         return {'FINISHED'}        
 
 class KIAIMPORTEXPORT_weight_import(Import_Export):
     """ウェイト情報をエクスポート"""
     bl_idname = "kiaimportexport.weight_import"
     bl_label = ""
-    filename = MODEL_NAME
     def execute(self, context):
+        cmd.weight_import()
         return {'FINISHED'}        
 
 class KIAIMPORTEXPORT_bone_export(Import_Export):
     """ボーン情報をエクスポート"""
     bl_idname = "kiaimportexport.bone_export"
     bl_label = ""
-    filename = MODEL_NAME
     def execute(self, context):
+        cmd.bone_export( BONE_NAME )
         return {'FINISHED'}        
 
 class KIAIMPORTEXPORT_bone_import(Import_Export):
     """ボーン情報をインポート"""
     bl_idname = "kiaimportexport.bone_import"
     bl_label = ""
-    filename = MODEL_NAME
     def execute(self, context):
+        cmd.bone_import( BONE_NAME )
         return {'FINISHED'}        
 
 
 classes = (
     KIAIMPORTEXPORT_Props_OA,
-    KIAIMPORTEXPORT_PT_ui
+    KIAIMPORTEXPORT_PT_ui,
+
+    KIAIMPORTEXPORT_mesh_export,
+    KIAIMPORTEXPORT_mesh_import,
+    KIAIMPORTEXPORT_weight_export,
+    KIAIMPORTEXPORT_weight_import,
+    KIAIMPORTEXPORT_bone_export,
+    KIAIMPORTEXPORT_bone_import
+
 )
 
 def register():
