@@ -36,18 +36,33 @@ class MeshFormat:
     name = ''
     vtxCount = 0
     polygonCount = 0
-    def __init__(self):
+    def __init__(self,obj):
+        if obj != []:
+            self.name = obj.name
+            m = Matrix(obj.matrix_world).to_3x3()
+    
+            self.m_rot = []
+            for i in range(3):
+                self.m_rot.append( [x for x in m[i]] )
+
+            self.location = [x for x in obj.location ]
+            print(self.location)
+
+        
         self.points = [] #頂点の配列 [ index , [ x ,y , z ] ]
         self.faces = [] #ポリゴンの配列　[ index, vertexarray[] , uarray[] , varray[] ] 
+        
     
     def export(self):
-        return [ [ self.name , self.vtxCount , self.polygonCount ] , self.points , self.faces ]
+        return [ [ self.name , self.vtxCount , self.polygonCount , self.m_rot ,self.location ] , self.points , self.faces ]
 
     def getData(self,dataArray ,scale ):
 
         self.name = dataArray[0][0]
         self.vtxCount = dataArray[0][1]
         self.polygonCount = dataArray[0][2]
+        self.m_rot = Matrix(dataArray[0][3]).to_4x4()
+        self.location = Vector(dataArray[0][4])
 
         self.points = dataArray[1]
         self.faces = dataArray[2]
@@ -65,6 +80,7 @@ class MeshFormat:
             self.polyarray.append(face[1])
             self.uarray.append(face[2])
             self.varray.append(face[3])
+
 
 #---------------------------------------------------------------------------------------
 #vertex format
@@ -183,7 +199,7 @@ def mesh_export(filename):
 
     meshArray = []
     for obj in utils.selected():
-        objname = obj.name
+        #objname = obj.name
 
         msh = obj.data        
         vertices = obj.data.vertices
@@ -214,11 +230,12 @@ def mesh_export(filename):
             UVarray.append([u_data,v_data])
 
 
-        meshformat = MeshFormat()
+        meshformat = MeshFormat(obj)
         meshArray.append(meshformat)
 
-        #オブジェクト名
-        meshformat.name = objname
+        #オブジェクト名とマトリックス
+        #meshformat.name = objname
+        #meshformat.setmatrix(Matrix(obj.matrix_world))
 
         #頂点情報----------------------------------------
         meshformat.vtxCount = vtxCount
@@ -246,7 +263,7 @@ def mesh_export(filename):
 def mesh_import( filename ):
     props = bpy.context.scene.kiaimportexport_props 
     for md in import_pcl(filename):
-        mf = MeshFormat()
+        mf = MeshFormat([])
         mf.getData( md ,props.scale )
         
         #メッシュの生成
@@ -271,6 +288,9 @@ def mesh_import( filename ):
 
         utils.sceneLink(obj)
         utils.select(obj,True)
+
+        obj.matrix_world = mf.m_rot
+        obj.location = mf.location
 
 
 

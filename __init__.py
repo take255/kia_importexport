@@ -95,11 +95,8 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
         box.label( text = name )
 
         row = box.row(align=True)
-        row.operator( offcmd, icon = 'COPYDOWN')
-        row.operator( oncmd , icon = 'PASTEDOWN')
-
-        # if scale != False:
-        #     row.prop(props, scale, icon='BLENDER', toggle=True)
+        row.operator( oncmd , icon = 'FILE_TICK')
+        row.operator( offcmd, icon = 'FILEBROWSER')
 
 
 class KIAIMPORTEXPORT_mesh_export(Import_Export):
