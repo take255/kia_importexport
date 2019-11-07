@@ -2,8 +2,7 @@ import numpy as np
 import bpy
 from bpy.props import FloatProperty
 
-from mathutils import Vector
-from mathutils import Matrix
+from mathutils import (Vector , Matrix)
 import pickle
 import imp
 
