@@ -10,20 +10,16 @@ from . import utils
 imp.reload(utils)
 
 
-PATH = 'E:/data/blender_ref/pickle/'
-
 #---------------------------------------------------------------------------------------
 #pickle
 #---------------------------------------------------------------------------------------
 def import_pcl(filename):
-    f = open(  PATH + filename  ,'rb')
+    f = open(  filename  ,'rb')
     dat = pickle.load( f )
     f.close()
     return dat
 
 def export_pcl(filename , export_data):
-    filename = PATH + filename
-    print(filename)
     f = open( filename, 'wb' )
     pickle.dump( export_data, f ,protocol=2)
     f.close()
@@ -186,8 +182,6 @@ class Bone:
                 self.bone.parent = dic[self.parent].bone
             if self.flg_connect == True:
                 self.bone.use_connect = True
-
-
 
 
 
@@ -453,3 +447,76 @@ def weight_export():
         export_pcl( filename ,  export_data )
 
         bpy.ops.object.mode_set(mode='OBJECT')
+
+
+
+#---------------------------------------------------------------------------------------
+#FBX Export
+#---------------------------------------------------------------------------------------
+# def export_fbx():
+#     #出力モード設定
+#     mode = bpy.context.scene.export_selected_export_option
+#     scale = bpy.context.scene.export_selected_fbx_scale
+#     outpath = bpy.context.scene.export_selected_fbx_path
+
+#     if mode == 'def':
+#         bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = scale , use_selection = True)
+
+#     elif mode == 'md':
+#         bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = scale , bake_anim_step=2.0 , bake_anim_simplify_factor=0.0 , use_selection = True)
+
+#---------------------------------------------------------------------------------------
+#FBXエクスポート
+#sel ファイル名をアクティブなモデルの名前とする
+#col 選択したコレクション
+#md マーベラスデザイナーでアニメーションの再生が正しく行われるようなオプション
+#---------------------------------------------------------------------------------------
+
+
+Collections = set()
+
+#コレクションの子供コレクションを再帰的に調べて全部取得する
+def get_col( x ):
+    Collections.add(x.name)
+    for col in x.children.keys():
+        self.get_col(x.children[col])
+
+#ファイル名として正しく修正
+def correct_name(name):
+    return name.replace( '.' , '_' ).replace( ' ' , '_' )
+
+def export_fbx():
+    props = bpy.context.scene.kiaimportexport_props 
+    outpath = props.fbx_path
+
+
+    if outpath[-1] != '\\' and outpath[-1] != '/':
+        outpath += '/'
+
+
+    if props.export_option == 'sel':
+        outpath += correct_name( utils.getActiveObj().name ) + '.fbx'
+
+    elif props.export_option == 'col':
+        Collections.clear()
+        utils.deselectAll()
+
+        col = utils.collection.get_active()
+        get_col( col )
+        
+        outpath += correct_name( col.name ) + '.fbx'
+
+        #選択されたコレクションにリンクされたオブジェクトを取得
+        for ob in bpy.context.scene.objects: 
+            if ob.users_collection[0].name in Collections: 
+                utils.select(ob,True)
+
+
+    if props.export_mode == 'def':
+        #bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , use_selection = True)
+        print(outpath)
+        bpy.ops.export_scene.fbx(filepath=outpath)
+
+    elif props.export_mode == 'md':
+        bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , bake_anim_step=2.0 , bake_anim_simplify_factor=0.0 , use_selection = True)
+        
