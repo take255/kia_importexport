@@ -21,7 +21,7 @@ def import_pcl(filename):
 
 def export_pcl(filename , export_data):
     f = open( filename, 'wb' )
-    pickle.dump( export_data, f ,protocol=2)
+    pickle.dump( export_data, f ,protocol=0)
     f.close()
 
 
