@@ -515,7 +515,7 @@ def export_fbx():
     if props.export_mode == 'def':
         #bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , use_selection = True)
         print(outpath)
-        bpy.ops.export_scene.fbx(filepath=outpath)
+        bpy.ops.export_scene.fbx(filepath=outpath , use_selection = True )
 
     elif props.export_mode == 'md':
         bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , bake_anim_step=2.0 , bake_anim_simplify_factor=0.0 , use_selection = True)
