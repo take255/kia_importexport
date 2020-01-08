@@ -485,7 +485,7 @@ def get_col( x ):
 def correct_name(name):
     return name.replace( '.' , '_' ).replace( ' ' , '_' )
 
-def export_fbx():
+def export_format(mode):
     props = bpy.context.scene.kiaimportexport_props 
     outpath = props.fbx_path
 
@@ -495,7 +495,7 @@ def export_fbx():
 
 
     if props.export_option == 'sel':
-        outpath += correct_name( utils.getActiveObj().name ) + '.fbx'
+        outpath += '%s.%s' % (correct_name( utils.getActiveObj().name ) , mode)
 
     elif props.export_option == 'col':
         Collections.clear()
@@ -504,7 +504,7 @@ def export_fbx():
         col = utils.collection.get_active()
         get_col( col )
         
-        outpath += correct_name( col.name ) + '.fbx'
+        outpath += '%s.%s' % (correct_name( col.name ) , mode)
 
         #選択されたコレクションにリンクされたオブジェクトを取得
         for ob in bpy.context.scene.objects: 
@@ -515,8 +515,15 @@ def export_fbx():
     if props.export_mode == 'def':
         #bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , use_selection = True)
         print(outpath)
-        bpy.ops.export_scene.fbx(filepath=outpath , use_selection = True )
+        if mode == 'fbx':
+            bpy.ops.export_scene.fbx(filepath=outpath , use_selection = True )
+        elif mode == 'obj':
+            bpy.ops.export_scene.obj(filepath=outpath , use_selection = True )
+        
 
     elif props.export_mode == 'md':
-        bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , bake_anim_step=2.0 , bake_anim_simplify_factor=0.0 , use_selection = True)
+        if mode == 'fbx':
+            bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , bake_anim_step=2.0 , bake_anim_simplify_factor=0.0 , use_selection = True)
+        elif mode == 'obj':
+            bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , use_selection = True)
         

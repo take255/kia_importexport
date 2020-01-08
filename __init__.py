@@ -113,7 +113,9 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
         box = col.box()
         box.label(text="FBX")
         
-        box.operator( 'kiaimportexport.export_fbx' , icon = 'FILE_TICK')
+        row = box.row()
+        row.operator( 'kiaimportexport.export_format' , text = 'Export FBX' , icon = 'FILE_TICK').mode = 'fbx'
+        row.operator( 'kiaimportexport.export_format' , text = 'Export OBJ' , icon = 'FILE_TICK').mode = 'obj'
         
         row = box.row()
         row.prop(props,"export_option", expand=True)
@@ -138,11 +140,16 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
 class KIAIMPORTEXPORT_MT_filebrowse(Operator):
     bl_idname = "kiaimportexport.filebrowse"
     bl_label = "Folder"
+
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
+    filename : StringProperty()
+    directory : StringProperty(subtype="FILE_PATH")
+
     def execute(self, context):
-        print(self.filepath)
+        #print(self.filepath)
+        print((self.filepath, self.filename, self.directory))
         props = bpy.context.scene.kiaimportexport_props        
-        props.fbx_path = self.filepath
+        props.fbx_path = self.directory
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -200,13 +207,24 @@ class KIAIMPORTEXPORT_bone_import(Operator):
         return {'FINISHED'}        
 
 #FBX
-class KIAIMPORTEXPORT_export_fbx(Operator):
+class KIAIMPORTEXPORT_export_format(Operator):
     """選択されているモデルのFBX出力"""
-    bl_idname = "kiaimportexport.export_fbx"
-    bl_label = "Export FBX"
+    bl_idname = "kiaimportexport.export_format"
+    bl_label = ""
+    mode : StringProperty(default='fbx') 
+
     def execute(self, context):
-        cmd.export_fbx()
+        cmd.export_format(self.mode)
         return {'FINISHED'}        
+
+# #OBJ
+# class KIAIMPORTEXPORT_export_obj(Operator):
+#     """選択されているモデルのOBJ出力"""
+#     bl_idname = "kiaimportexport.export_obj"
+#     bl_label = "Export OBJ"
+#     def execute(self, context):
+#         cmd.export_obj()
+#         return {'FINISHED'}        
 
 
 classes = (
@@ -221,7 +239,7 @@ classes = (
     KIAIMPORTEXPORT_bone_export,
     KIAIMPORTEXPORT_bone_import,
 
-    KIAIMPORTEXPORT_export_fbx,
+    KIAIMPORTEXPORT_export_format,
     KIAIMPORTEXPORT_MT_filebrowse
 
 )
