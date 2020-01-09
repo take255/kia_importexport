@@ -46,7 +46,7 @@ bl_info = {
 PATH = 'E:/data/blender_ref/pickle/'
 MODEL_NAME = 'model.dat'
 BONE_NAME = 'bonedata.dat'
-
+AXIS = (('X','X','X'), ('Y','Y','Y'), ('Z','Z','Z'), ('-X','-X','-X'), ('-Y','-Y','-Y'), ('-Z','-Z','-Z'))
 
 def fullpath(path,filename):
     if path[-1] != '/':
@@ -69,6 +69,8 @@ class KIAIMPORTEXPORT_Props_OA(PropertyGroup):
     export_option : EnumProperty(items= (('sel', 'sel', '選択されたもの'),('col', 'col', 'colコレクション')))
     export_mode : EnumProperty(items= (('def', 'def', 'Default'),('md', 'md', 'ForMarverousDesigner')))
     fbx_path : StringProperty(name = "path")
+    axis_forward : EnumProperty(items = AXIS , name = 'forward',default = '-Z' )
+    axis_up : EnumProperty(items = AXIS , name = 'up' ,default = 'Y')
 
 
 #---------------------------------------------------------------------------------------
@@ -125,7 +127,14 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
         row.prop(props,"fbx_path")
         row.operator( 'kiaimportexport.filebrowse' , icon = 'FILE_FOLDER' ,text = "")
 
+
         col.prop(props, 'scale', icon='BLENDER', toggle=True)
+
+        row = col.row()
+        row.prop(props, 'axis_forward', icon='BLENDER' )
+        row.prop(props, 'axis_up', icon='BLENDER')
+
+    
 
 
     def ui(self , name , oncmd ,offcmd ):

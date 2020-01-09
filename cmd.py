@@ -512,18 +512,33 @@ def export_format(mode):
                 utils.select(ob,True)
 
 
+    forward = props.axis_forward
+    up = props.axis_up
+
     if props.export_mode == 'def':
-        #bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , use_selection = True)
         print(outpath)
         if mode == 'fbx':
-            bpy.ops.export_scene.fbx(filepath=outpath , use_selection = True )
+            bpy.ops.export_scene.fbx(
+                filepath=outpath ,
+                use_selection = True ,
+                global_scale = props.scale ,
+                axis_forward = props.axis_forward ,
+                axis_up = props.axis_up
+                )
+
         elif mode == 'obj':
-            bpy.ops.export_scene.obj(filepath=outpath , use_selection = True )
+            bpy.ops.export_scene.obj(
+                filepath=outpath ,
+                use_selection = True ,
+                global_scale = props.scale ,
+                axis_forward = props.axis_forward ,
+                axis_up = props.axis_up
+                )
         
 
     elif props.export_mode == 'md':
         if mode == 'fbx':
             bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , bake_anim_step=2.0 , bake_anim_simplify_factor=0.0 , use_selection = True)
         elif mode == 'obj':
-            bpy.ops.export_scene.fbx(filepath=outpath ,global_scale = props.scale , use_selection = True)
+            bpy.ops.export_scene.obj(filepath=outpath ,global_scale = props.scale , use_selection = True)
         
