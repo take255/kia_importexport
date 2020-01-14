@@ -65,12 +65,17 @@ def bonename():
 #Props
 #---------------------------------------------------------------------------------------
 class KIAIMPORTEXPORT_Props_OA(PropertyGroup):
+    #option
+    bone_upvector : EnumProperty(items = AXIS , name = 'bone upvector',default = 'Z' ) 
+
+    #FBX option
     scale : FloatProperty(name="scale",min=0.001,default=1.0)
     export_option : EnumProperty(items= (('sel', 'sel', '選択されたもの'),('col', 'col', 'colコレクション')))
     export_mode : EnumProperty(items= (('def', 'def', 'Default'),('md', 'md', 'ForMarverousDesigner')))
     fbx_path : StringProperty(name = "path")
     axis_forward : EnumProperty(items = AXIS , name = 'forward',default = '-Z' )
     axis_up : EnumProperty(items = AXIS , name = 'up' ,default = 'Y')
+
 
 
 #---------------------------------------------------------------------------------------
@@ -111,6 +116,13 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
         self.ui( "mesh" , "kiaimportexport.mesh_export" , "kiaimportexport.mesh_import" )
         self.ui( "weight" , "kiaimportexport.weight_export" , "kiaimportexport.weight_import" )
         self.ui( "bone" , "kiaimportexport.bone_export" , "kiaimportexport.bone_import")
+
+
+        box = col.box()
+        box.label(text="BoneSettings")
+        box.prop(props, 'bone_upvector', icon='BLENDER' )
+
+
 
         box = col.box()
         box.label(text="FBX")

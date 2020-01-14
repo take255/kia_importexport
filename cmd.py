@@ -5,6 +5,7 @@ from bpy.props import FloatProperty
 from mathutils import (Vector , Matrix)
 import pickle
 import imp
+import math
 
 from . import utils
 imp.reload(utils)
@@ -292,18 +293,36 @@ def mesh_import( filename ):
 #bone export
 #---------------------------------------------------------------------------------------
 def bone_export( filename ):
+    props = bpy.context.scene.kiaimportexport_props
+
     obj = bpy.context.object
     bpy.ops.object.mode_set(mode='EDIT')
 
     bonearray = []
+
+    print(props.bone_upvector)
+
     for bone in obj.data.edit_bones:
+        loc = Vector(bone.head)
 
         v = Vector(bone.tail) - Vector(bone.head)
         v.normalize()
-        vector = (v[0],v[1],v[2])
 
 
+        if props.bone_upvector == 'Y':
+            vector = (v[0],v[2],v[1])
+        elif props.bone_upvector == 'Z':
+            vector = (v[0],v[1],v[2])
+
+
+        #m0 = Matrix(bone.matrix).to_3x3()
         m0 = Matrix(bone.matrix)
+
+        if props.bone_upvector == 'Y':
+            m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
+
+
+
         m0.transpose()
         matrix = np.array(m0).flatten().tolist()
 
