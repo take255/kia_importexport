@@ -263,6 +263,7 @@ def mesh_import( filename ):
         
         #メッシュの生成
         mesh_data = bpy.data.meshes.new("cube_mesh_data")
+        print(mf.vtxarray, mf.polyarray)
         mesh_data.from_pydata(mf.vtxarray, [], mf.polyarray)
         mesh_data.update()
 
@@ -379,7 +380,7 @@ def bone_import(filename):
 #weight import
 #オブジェクトモードなら全頂点のウェイトを読み込む　エディットモードなら選択した頂点だけ
 #---------------------------------------------------------------------------------------
-def weight_import():
+def weight_import(path):
 
     mode = True
     if utils.current_mode() == 'OBJECT':
@@ -387,7 +388,7 @@ def weight_import():
 
     for obj in bpy.context.selected_objects:
 
-        filename = '%s.wgt' % obj.name
+        filename = '%s%s.wgt' % (path ,obj.name)
 
         #選択された頂点のインデックスのセットをつくり、ウェイトを描き戻すときにチェックする
         #インデックスは０から始まる
@@ -422,14 +423,13 @@ def weight_import():
                     vg.add( [i], float(w[1]), 'REPLACE' )
 
 
-
 #---------------------------------------------------------------------------------------
 #weight export
 #ウェイトフォーマット インデックスは含めない（リストの順番で対応）
 #一つ目の要素にボーン名の配列
 #[ [bone1 ,bon2 , ], [bonename , value] , [bonename , value] , . . . ]
 #---------------------------------------------------------------------------------------
-def weight_export():
+def weight_export(path):
     #ボーン名
     bonearray = set()
 
@@ -461,11 +461,132 @@ def weight_export():
 
         export_data.insert(0,list(bonearray))
 
-        filename = objname + '.wgt'
+        filename = path + objname + '.wgt'
         print(export_data)
         export_pcl( filename ,  export_data )
 
         bpy.ops.object.mode_set(mode='OBJECT')
+
+
+#---------------------------------------------------------------------------------------
+#animation Export
+#ボーン単位でプロットして出力する。フレーム単位では骨の姿勢のアップデートがうまくいかなかった
+#フォーマット 第一要素にヘッダー
+# [ [startframe , enndframe ]] ,  [ bonename ,[ [m0,m1,..,m15] , [m0,m1,..,m15] ]] ,  [ bonename,[m0,m1,..,m15] ] ,....  ]
+#---------------------------------------------------------------------------------------
+def anim_export(filename):
+    props = bpy.context.scene.kiaimportexport_props
+    
+    start = bpy.context.scene.frame_start
+    end = bpy.context.scene.frame_end
+
+    exportdata = [ [start,end] ]
+    
+    amt = bpy.context.active_object
+    num = len(amt.pose.bones)
+
+    for f in range(end):    
+        bpy.context.scene.frame_set(f)
+        print('%d/%d' % (f,end))
+    
+        animarray = []
+        for b in amt.pose.bones:       
+            m0 = Matrix(b.matrix)
+
+            if props.bone_upvector == 'Y':
+                m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
+
+            m0.transpose()
+
+            matrix = np.array(m0).flatten().tolist()
+            animarray.append([b.name,matrix])
+
+        exportdata.append(animarray)
+
+    export_pcl( filename ,  exportdata )
+
+
+# def anim_export_(filename):
+#     props = bpy.context.scene.kiaimportexport_props
+    
+#     start = bpy.context.scene.frame_start
+#     end = bpy.context.scene.frame_end
+
+#     exportdata = [ [start,end] ]
+    
+#     amt = bpy.context.active_object
+#     num = len(amt.pose.bones)
+
+#     for i,b in enumerate(amt.pose.bones):
+#         print('%d/%d' % (i,num))
+#         animarray = []
+#         for f in range(end):
+#             bpy.context.scene.frame_set(f)
+
+#             m0 = Matrix(b.matrix)
+
+#             if props.bone_upvector == 'Y':
+#                 m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
+
+#             m0.transpose()
+
+#             matrix = np.array(m0).flatten().tolist()
+#             animarray.append(matrix)
+
+#         exportdata.append([b.name , animarray])
+
+#     export_pcl( filename ,  exportdata )
+
+#選択した骨にアニメーションをインポート
+def anim_import(filename):
+    amt = bpy.context.active_object
+
+    alldata = import_pcl(filename)
+    header = alldata.pop(0)
+
+    allbonename = [b.name for b in amt.pose.bones]
+
+
+    for f,data in enumerate(alldata):
+        bpy.context.scene.frame_set(f)
+        bpy.context.view_layer.update()
+
+        for bone in data:
+            name = bone[0]
+            m = bone[1]
+
+            if name in allbonename:
+                b = amt.pose.bones[name]
+                matrix = Matrix([m[0:4],m[4:8],m[8:12],m[12:16]])
+                
+                matrix.transpose()
+                b.matrix = matrix
+                b.keyframe_insert(data_path="location")
+                b.keyframe_insert(data_path="rotation_quaternion")
+
+
+# #選択した骨にアニメーションをインポート
+# def anim_import_(filename):
+#     amt = bpy.context.active_object
+
+#     alldata = import_pcl(filename)
+#     header = alldata.pop(0)
+
+#     allbonename = [b.name for b in amt.pose.bones]
+#     for data in alldata:
+#         name = data[0]
+#         for f,m in enumerate(data[1]):
+#             bpy.context.scene.frame_set(f)
+#             bpy.context.view_layer.update()
+
+#             if name in allbonename:
+#                 b = amt.pose.bones[name]
+#                 matrix = Matrix([m[0:4],m[4:8],m[8:12],m[12:16]])
+#                 matrix.transpose()
+#                 b.matrix = matrix
+#                 b.keyframe_insert(data_path="location")
+#                 b.keyframe_insert(data_path="rotation_quaternion")
+
 
 
 

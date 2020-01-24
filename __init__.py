@@ -61,6 +61,14 @@ def bonename():
     prefs = bpy.context.preferences.addons[__name__].preferences
     return fullpath(prefs.path,prefs.bone_name)
 
+def weightname():
+    prefs = bpy.context.preferences.addons[__name__].preferences
+    return prefs.path
+
+def animname():
+    prefs = bpy.context.preferences.addons[__name__].preferences
+    return fullpath(prefs.path,'test.anim')
+
 #---------------------------------------------------------------------------------------
 #Props
 #---------------------------------------------------------------------------------------
@@ -116,6 +124,7 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
         self.ui( "mesh" , "kiaimportexport.mesh_export" , "kiaimportexport.mesh_import" )
         self.ui( "weight" , "kiaimportexport.weight_export" , "kiaimportexport.weight_import" )
         self.ui( "bone" , "kiaimportexport.bone_export" , "kiaimportexport.bone_import")
+        self.ui( "anim" , "kiaimportexport.anim_export" , "kiaimportexport.anim_import")
 
 
         box = col.box()
@@ -200,7 +209,7 @@ class KIAIMPORTEXPORT_weight_export(Operator):
     bl_idname = "kiaimportexport.weight_export"
     bl_label = ""
     def execute(self, context):
-        cmd.weight_export()
+        cmd.weight_export(weightname())
         return {'FINISHED'}        
 
 class KIAIMPORTEXPORT_weight_import(Operator):
@@ -208,7 +217,7 @@ class KIAIMPORTEXPORT_weight_import(Operator):
     bl_idname = "kiaimportexport.weight_import"
     bl_label = ""
     def execute(self, context):
-        cmd.weight_import()
+        cmd.weight_import(weightname())
         return {'FINISHED'}        
 
 class KIAIMPORTEXPORT_bone_export(Operator):
@@ -226,6 +235,23 @@ class KIAIMPORTEXPORT_bone_import(Operator):
     def execute(self, context):
         cmd.bone_import( bonename() )
         return {'FINISHED'}        
+
+class KIAIMPORTEXPORT_anim_export(Operator):
+    """アニメーション情報をエクスポート"""
+    bl_idname = "kiaimportexport.anim_export"
+    bl_label = ""
+    def execute(self, context):
+        cmd.anim_export(animname())
+        return {'FINISHED'}        
+
+class KIAIMPORTEXPORT_anim_import(Operator):
+    """アニメーション情報をインポート"""
+    bl_idname = "kiaimportexport.anim_import"
+    bl_label = ""
+    def execute(self, context):
+        cmd.anim_import(animname())
+        return {'FINISHED'}        
+
 
 #FBX
 class KIAIMPORTEXPORT_export_format(Operator):
@@ -259,6 +285,9 @@ classes = (
     KIAIMPORTEXPORT_weight_import,
     KIAIMPORTEXPORT_bone_export,
     KIAIMPORTEXPORT_bone_import,
+    KIAIMPORTEXPORT_anim_export,
+    KIAIMPORTEXPORT_anim_import,
+
 
     KIAIMPORTEXPORT_export_format,
     KIAIMPORTEXPORT_MT_filebrowse
