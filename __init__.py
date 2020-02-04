@@ -79,7 +79,7 @@ class KIAIMPORTEXPORT_Props_OA(PropertyGroup):
     #FBX option
     scale : FloatProperty(name="scale",min=0.001,default=1.0)
     export_option : EnumProperty(items= (('sel', 'sel', '選択されたもの'),('col', 'col', 'colコレクション')))
-    export_mode : EnumProperty(items= (('def', 'def', 'Default'),('md', 'md', 'ForMarverousDesigner')))
+    export_mode : EnumProperty(items= (('def', 'def', 'Default'),('ue', 'ue', 'ForUnrealEngine'),('md', 'md', 'ForMarverousDesigner')))
     fbx_path : StringProperty(name = "path")
     axis_forward : EnumProperty(items = AXIS , name = 'forward',default = '-Z' )
     axis_up : EnumProperty(items = AXIS , name = 'up' ,default = 'Y')
@@ -155,7 +155,6 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
         row.prop(props, 'axis_forward', icon='BLENDER' )
         row.prop(props, 'axis_up', icon='BLENDER')
 
-    
 
 
     def ui(self , name , oncmd ,offcmd ):

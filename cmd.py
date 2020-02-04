@@ -674,7 +674,30 @@ def export_format(mode):
                 axis_forward = props.axis_forward ,
                 axis_up = props.axis_up
                 )
-        
+
+    elif props.export_mode == 'ue':
+        print(outpath)
+        if mode == 'fbx':
+            bpy.ops.export_scene.fbx(
+                filepath=outpath ,
+                use_selection = True ,
+                global_scale = props.scale ,
+                axis_forward = props.axis_forward ,
+                axis_up = props.axis_up,
+                mesh_smooth_type = 'FACE',#Added for UE
+                add_leaf_bones  = False , #Added for UE
+                use_armature_deform_only  = True #Added for UE
+                )
+
+        elif mode == 'obj':
+            bpy.ops.export_scene.obj(
+                filepath=outpath ,
+                use_selection = True ,
+                global_scale = props.scale ,
+                axis_forward = props.axis_forward ,
+                axis_up = props.axis_up
+                )
+
 
     elif props.export_mode == 'md':
         if mode == 'fbx':
