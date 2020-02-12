@@ -407,21 +407,26 @@ def weight_import(path):
                     v.groups[i].weight=0
 
         #ウェイト値読み込む
-        if mode:
+        if mode:#edit mode 
             for i,point in enumerate(import_pci()):
                 if i in selectedVtxIndex:
                     for w in point.findall('weight'):
                         vg = obj.vertex_groups[w[0]]
                         vg.add( [i], float(w[1]), 'REPLACE' )
 
-        else:
+        else:#object mode
             dat = import_pcl(filename)
+            print(dat)
+
             bonearray = dat.pop(0)
             for i,point in enumerate(dat):
+
+                result = []
                 for w in point:
                     vg = obj.vertex_groups[w[0]]
                     vg.add( [i], float(w[1]), 'REPLACE' )
-
+                    result.append([w[0],w[1]])
+                print(i , result)
 
 #---------------------------------------------------------------------------------------
 #weight export

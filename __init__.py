@@ -212,7 +212,7 @@ class KIAIMPORTEXPORT_weight_export(Operator):
         return {'FINISHED'}        
 
 class KIAIMPORTEXPORT_weight_import(Operator):
-    """ウェイト情報をエクスポート"""
+    """ウェイト情報をインポート"""
     bl_idname = "kiaimportexport.weight_import"
     bl_label = ""
     def execute(self, context):
