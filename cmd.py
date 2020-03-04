@@ -34,6 +34,8 @@ class MeshFormat:
     vtxCount = 0
     polygonCount = 0
     def __init__(self,obj):
+        props = bpy.context.scene.kiaimportexport_props 
+
         if obj != []:
             self.name = obj.name
             m = Matrix(obj.matrix_world).to_3x3()
@@ -42,8 +44,13 @@ class MeshFormat:
             for i in range(3):
                 self.m_rot.append( [x for x in m[i]] )
 
-            self.location = [x for x in obj.location ]
-            print(self.location)
+
+            loc = [x for x in obj.location ]
+            if props.upvector == 'Maya':
+                self.location = [loc[0] , loc[2] , -loc[1]] 
+
+            elif props.upvector == 'Blender':
+                self.location = loc
 
         
         self.points = [] #頂点の配列 [ index , [ x ,y , z ] ]
@@ -147,9 +154,7 @@ class Bone:
 
 
     def SetHead(self,val):
-        print(val)
         x = np.array(val.split(' ')[:-1])#配列の最後が''になるので削除
-        print(x)
         self.head = x.astype(np.float)
 
     def SetTail(self,val):
@@ -159,7 +164,6 @@ class Bone:
     def SetMatrix(self,val):
         x = np.array(val.split(' ')[:-1])
         vec = x.astype(np.float)
-        print(vec[0:4] , vec[4:8],vec[8:12],vec[12:16])
         self.matrix = mathutils.Matrix([vec[0:4],vec[4:8],vec[8:12],vec[12:16]])
 
 
@@ -171,7 +175,6 @@ class Bone:
         # vectorと子供の内積が1ならばその子供の位置をtailにする
         #対象の子供があった場合、その子供のジョイントのコネクトフラグをＯＮにする
         if self.childlen != []:
-            print(self.childlen,'vector>>', dic[self.childlen[0]].head)
             self.bone.tail = dic[self.childlen[0]].head
             dic[self.childlen[0]].flg_connect = True
         else:
@@ -203,10 +206,26 @@ def mesh_export(filename):
         #頂点の情報
         vtxCount = str(len(vertices))#頂点数
         vtxArray = []
-        for v in vertices:
-            vtx = Vtx()
-            vtxArray.append(vtx)
-            vtx.co = v.co * props.scale
+
+        if props.upvector == 'Maya':
+            #vector = (v[0],v[2],v[1])
+            for v in vertices:
+                vtx = Vtx()
+                vtxArray.append(vtx)
+                vtx.co = Vector([ v.co[0] , v.co[2] , -v.co[1] ]) * props.scale
+
+        elif props.upvector == 'Blender':
+            #vector = (v[0],v[1],v[2])
+            for v in vertices:
+                vtx = Vtx()
+                vtxArray.append(vtx)
+                vtx.co = v.co * props.scale
+
+
+        # for v in vertices:
+        #     vtx = Vtx()
+        #     vtxArray.append(vtx)
+        #     vtx.co = v.co * props.scale
 
         #ポリゴンの情報
         polygonCount = str(len(polygons))#頂点数
@@ -263,7 +282,6 @@ def mesh_import( filename ):
         
         #メッシュの生成
         mesh_data = bpy.data.meshes.new("cube_mesh_data")
-        print(mf.vtxarray, mf.polyarray)
         mesh_data.from_pydata(mf.vtxarray, [], mf.polyarray)
         mesh_data.update()
 
@@ -301,8 +319,6 @@ def bone_export( filename ):
 
     bonearray = []
 
-    print(props.bone_upvector)
-
     for bone in obj.data.edit_bones:
         loc = Vector(bone.head)
 
@@ -310,16 +326,16 @@ def bone_export( filename ):
         v.normalize()
 
 
-        if props.bone_upvector == 'Y':
+        if props.upvector == 'Maya':
             vector = (v[0],v[2],v[1])
-        elif props.bone_upvector == 'Z':
+        elif props.upvector == 'Blender':
             vector = (v[0],v[1],v[2])
 
 
         #m0 = Matrix(bone.matrix).to_3x3()
         m0 = Matrix(bone.matrix)
 
-        if props.bone_upvector == 'Y':
+        if props.upvector == 'Maya':
             m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
 
 
@@ -416,7 +432,6 @@ def weight_import(path):
 
         else:#object mode
             dat = import_pcl(filename)
-            print(dat)
 
             bonearray = dat.pop(0)
             for i,point in enumerate(dat):
@@ -426,7 +441,6 @@ def weight_import(path):
                     vg = obj.vertex_groups[w[0]]
                     vg.add( [i], float(w[1]), 'REPLACE' )
                     result.append([w[0],w[1]])
-                print(i , result)
 
 #---------------------------------------------------------------------------------------
 #weight export
@@ -467,7 +481,6 @@ def weight_export(path):
         export_data.insert(0,list(bonearray))
 
         filename = path + objname + '.wgt'
-        print(export_data)
         export_pcl( filename ,  export_data )
 
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -492,13 +505,12 @@ def anim_export(filename):
 
     for f in range(end):    
         bpy.context.scene.frame_set(f)
-        print('%d/%d' % (f,end))
     
         animarray = []
         for b in amt.pose.bones:       
             m0 = Matrix(b.matrix)
 
-            if props.bone_upvector == 'Y':
+            if props.upvector == 'Y':
                 m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
 
             m0.transpose()
@@ -530,7 +542,7 @@ def anim_export(filename):
 
 #             m0 = Matrix(b.matrix)
 
-#             if props.bone_upvector == 'Y':
+#             if props.upvector == 'Y':
 #                 m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
 
 #             m0.transpose()

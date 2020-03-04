@@ -47,6 +47,7 @@ PATH = 'E:/data/blender_ref/pickle/'
 MODEL_NAME = 'model.dat'
 BONE_NAME = 'bonedata.dat'
 AXIS = (('X','X','X'), ('Y','Y','Y'), ('Z','Z','Z'), ('-X','-X','-X'), ('-Y','-Y','-Y'), ('-Z','-Z','-Z'))
+WORLD = (('Blender','Blender','Blender'), ('Maya','Maya','Maya'))
 
 def fullpath(path,filename):
     if path[-1] != '/':
@@ -74,7 +75,7 @@ def animname():
 #---------------------------------------------------------------------------------------
 class KIAIMPORTEXPORT_Props_OA(PropertyGroup):
     #option
-    bone_upvector : EnumProperty(items = AXIS , name = 'bone upvector',default = 'Z' ) 
+    upvector : EnumProperty(items = WORLD , name = 'bone upvector',default = 'Blender' ) 
 
     #FBX option
     scale : FloatProperty(name="scale",min=0.001,default=1.0)
@@ -128,8 +129,8 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
 
 
         box = col.box()
-        box.label(text="BoneSettings")
-        box.prop(props, 'bone_upvector', icon='BLENDER' )
+        box.label(text="WorldSettings")
+        box.prop(props, 'upvector', icon='BLENDER' )
 
 
 
