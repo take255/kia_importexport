@@ -1,5 +1,6 @@
 import numpy as np
 import bpy
+import bmesh
 from bpy.props import FloatProperty
 
 from mathutils import (Vector , Matrix)
@@ -55,10 +56,12 @@ class MeshFormat:
         
         self.points = [] #頂点の配列 [ index , [ x ,y , z ] ]
         self.faces = [] #ポリゴンの配列　[ index, vertexarray[] , uarray[] , varray[] ] 
+        self.hardedge = []
+        self.sharpedge = []
         
     
     def export(self):
-        return [ [ self.name , self.vtxCount , self.polygonCount , self.m_rot ,self.location ] , self.points , self.faces ]
+        return [ [ self.name , self.vtxCount , self.polygonCount , self.m_rot ,self.location ] , self.points , self.faces ,  self.hardedge ,self.sharpedge]
 
     def getData(self,dataArray ,scale ):
 
@@ -113,7 +116,8 @@ class Vtx:
             sum += w.value
 
         for w in self.weight:
-            w.value = str(w.value/sum)
+            #w.value = str(w.value/sum)
+            w.value = w.value/sum
 
     def export(self):
         return [[w.name , w.value] for w in self.weight]
@@ -198,10 +202,13 @@ def mesh_export(filename):
     meshArray = []
     for obj in utils.selected():
         #objname = obj.name
-
+        
         msh = obj.data        
         vertices = obj.data.vertices
         polygons = obj.data.polygons
+
+        bm = bmesh.new()
+        bm.from_mesh(msh)
 
         #頂点の情報
         vtxCount = str(len(vertices))#頂点数
@@ -246,6 +253,35 @@ def mesh_export(filename):
 
         meshformat = MeshFormat(obj)
         meshArray.append(meshformat)
+
+
+        # Edge information
+        # Detect hard edge
+        #print(obj.data.use_auto_smooth)
+        #print(obj.data.auto_smooth_angle)
+        if obj.data.use_auto_smooth:
+            #obj.data.auto_smooth_angle = 1.39626
+            rad = obj.data.auto_smooth_angle
+            #meshformat.hardedge = [f.index for e in bm.edges if e.calc_face_angle() > rad for f in e.link_faces ]
+            #meshformat.hardedge = [f.index for e,e1 in zip(bm.edges,obj.data.edges) if e.calc_face_angle() > rad or e1.use_edge_sharp == True for f in e.link_faces ]
+
+            for e,e1 in zip(bm.edges , obj.data.edges):
+                faces = e.link_faces
+                angle = 0
+                if len(faces) == 2:
+                    angle = e.calc_face_angle()
+                    if angle > rad or e1.use_edge_sharp == True:
+                        meshformat.hardedge.append([f.index for f in faces])
+        #meshformat.sharpedge = [e for e in obj.data.edges if e.use_edge_sharp]
+        # edgearray = []
+        # for e in bm.edges:
+        #     angle = math.degrees(e.calc_face_angle())
+        #     edgearray.append([angle,[f.index for f in e.link_faces]])
+
+        # meshformat.hardedge = [x[1] for x in edgearray if x[0] > 80 ]
+
+
+
 
         #オブジェクト名とマトリックス
         #meshformat.name = objname
@@ -320,20 +356,18 @@ def bone_export( filename ):
     bonearray = []
 
     for bone in obj.data.edit_bones:
-        loc = Vector(bone.head)
-
         v = Vector(bone.tail) - Vector(bone.head)
         v.normalize()
-
 
         if props.upvector == 'Maya':
             vector = (v[0],v[2],v[1])
         elif props.upvector == 'Blender':
             vector = (v[0],v[1],v[2])
 
-
-        #m0 = Matrix(bone.matrix).to_3x3()
-        m0 = Matrix(bone.matrix)
+        loc = Vector(bone.head)* props.scale
+        m0 = Matrix.Translation(loc) @ Matrix(bone.matrix).to_3x3().to_4x4()
+               
+        #m0 = Matrix(bone.matrix)
 
         if props.upvector == 'Maya':
             m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
@@ -448,6 +482,57 @@ def weight_import(path):
 #一つ目の要素にボーン名の配列
 #[ [bone1 ,bon2 , ], [bonename , value] , [bonename , value] , . . . ]
 #---------------------------------------------------------------------------------------
+def weight_export__(path):
+    #ボーン名
+    bonearray = set()
+
+    for obj in utils.selected():
+
+        objname = obj.name
+        boneArray = []
+        for group in obj.vertex_groups:
+            boneArray.append(group.name)
+
+        #print(boneArray)
+        size = len(boneArray)
+        #頂点の情報
+        msh = obj.data
+        vtxCount = str(len(msh.vertices))#頂点数
+
+
+        print(boneArray)
+        export_data = []
+        for v in msh.vertices:
+            vtx = Vtx()
+            #print('--------------------------------')
+            wgt = [0.0]* size
+            for vge in v.groups:
+                if vge.weight > 0.00001 and vge.group < size :#ウェイト値０は除外 and prevent index out of range
+                    #vtx.getWeight(vge.group, vge.weight ,boneArray) #boneArrayから骨名を割り出して格納
+                    wgt[vge.group] = vge.weight
+            #vtx.normalize_weight() #ウェイトをノーマライズする
+            #print(wgt)
+            # for bone in [x.name for x in vtx.weight]:
+            #     bonearray.add(bone)
+
+        #     export_data.append(vtx.export())
+
+
+        # export_data.insert(0,list(bonearray))
+
+        # filename = path + objname + '.wgt'
+        # export_pcl( filename ,  export_data )
+
+        # bpy.ops.object.mode_set(mode='OBJECT')
+
+
+
+#---------------------------------------------------------------------------------------
+#weight export
+#ウェイトフォーマット インデックスは含めない（リストの順番で対応）
+#一つ目の要素にボーン名の配列
+#[ [bone1 ,bon2 , ], [bonename , value] , [bonename , value] , . . . ]
+#---------------------------------------------------------------------------------------
 def weight_export(path):
     #ボーン名
     bonearray = set()
@@ -459,7 +544,8 @@ def weight_export(path):
         for group in obj.vertex_groups:
             boneArray.append(group.name)
 
-
+        #print(boneArray)
+        size = len(boneArray)
         #頂点の情報
         msh = obj.data
         vtxCount = str(len(msh.vertices))#頂点数
@@ -468,7 +554,7 @@ def weight_export(path):
         for v in msh.vertices:
             vtx = Vtx()
             for vge in v.groups:
-                if vge.weight > 0.00001:#ウェイト値０は除外
+                if vge.weight > 0.00001 and vge.group < size :#ウェイト値０は除外 and prevent index out of range
                     vtx.getWeight(vge.group, vge.weight ,boneArray) #boneArrayから骨名を割り出して格納
             vtx.normalize_weight() #ウェイトをノーマライズする
 
@@ -508,9 +594,12 @@ def anim_export(filename):
     
         animarray = []
         for b in amt.pose.bones:       
-            m0 = Matrix(b.matrix)
+            #m0 = Matrix(b.matrix)
+            loc = Vector(b.head)* props.scale
+            m0 = Matrix.Translation(loc) @ Matrix(b.matrix).to_3x3().to_4x4()
 
-            if props.upvector == 'Y':
+
+            if props.upvector == 'Maya':
                 m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
 
             m0.transpose()
