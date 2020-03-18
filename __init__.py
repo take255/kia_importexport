@@ -25,7 +25,8 @@ from bpy.props import(
     FloatProperty,
     PointerProperty,
     StringProperty,
-    EnumProperty
+    EnumProperty,
+    BoolProperty
     )
 
 from . import utils
@@ -76,6 +77,7 @@ def animname():
 class KIAIMPORTEXPORT_Props_OA(PropertyGroup):
     #option
     upvector : EnumProperty(items = WORLD , name = 'bone upvector',default = 'Blender' ) 
+    add_tipbones : BoolProperty(name="add tip bones" ,  default = False)
 
     #FBX option
     scale : FloatProperty(name="scale",min=0.001,default=1.0)
@@ -129,8 +131,9 @@ class KIAIMPORTEXPORT_PT_ui(utils.panel):
 
 
         box = col.box()
-        box.label(text="WorldSettings")
+        box.label(text="Export Settings")
         box.prop(props, 'upvector', icon='BLENDER' )
+        box.prop(props, 'add_tipbones')
 
 
 

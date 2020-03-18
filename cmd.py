@@ -347,6 +347,30 @@ def mesh_import( filename ):
 #---------------------------------------------------------------------------------------
 #bone export
 #---------------------------------------------------------------------------------------
+def get_bonedata(v , loc , matrix):
+    props = bpy.context.scene.kiaimportexport_props
+
+    if props.upvector == 'Maya':
+        vector = (v[0],v[2],v[1])
+    elif props.upvector == 'Blender':
+        vector = (v[0],v[1],v[2])
+
+    #loc = Vector(bone.head)* props.scale
+    #m0 = Matrix.Translation(loc) @ Matrix(bone.matrix).to_3x3().to_4x4()
+    m0 = Matrix.Translation(loc) @ Matrix(matrix).to_3x3().to_4x4()
+            
+    if props.upvector == 'Maya':
+        m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
+
+    m0.transpose()
+    matrix = np.array(m0).flatten().tolist()
+
+    return [matrix,vector]
+
+        
+
+
+
 def bone_export( filename ):
     props = bpy.context.scene.kiaimportexport_props
 
@@ -358,40 +382,60 @@ def bone_export( filename ):
     for bone in obj.data.edit_bones:
         v = Vector(bone.tail) - Vector(bone.head)
         v.normalize()
-
-        if props.upvector == 'Maya':
-            vector = (v[0],v[2],v[1])
-        elif props.upvector == 'Blender':
-            vector = (v[0],v[1],v[2])
-
         loc = Vector(bone.head)* props.scale
-        m0 = Matrix.Translation(loc) @ Matrix(bone.matrix).to_3x3().to_4x4()
+        
+        matrix = Matrix( bone.matrix )
+        #m = Matrix( bone.matrix )
+        result = get_bonedata( v , loc, matrix )
+        # if props.upvector == 'Maya':
+        #     vector = (v[0],v[2],v[1])
+        # elif props.upvector == 'Blender':
+        #     vector = (v[0],v[1],v[2])
+
+        # loc = Vector(bone.head)* props.scale
+        # m0 = Matrix.Translation(loc) @ Matrix(bone.matrix).to_3x3().to_4x4()
                
-        #m0 = Matrix(bone.matrix)
+        # if props.upvector == 'Maya':
+        #     m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
 
-        if props.upvector == 'Maya':
-            m0 = Matrix.Rotation(math.radians(-90.0), 3, "X").to_4x4() @ m0 
-
-
-
-        m0.transpose()
-        matrix = np.array(m0).flatten().tolist()
+        # m0.transpose()
+        # matrix = np.array(m0).flatten().tolist()
 
         
+        # if bone.parent != None:
+        #     parent = bone.parent.name
+        # else:
+        #     parent = ''
+
         if bone.parent != None:
             parent = bone.parent.name
         else:
             parent = ''
 
+
         #子供のリスト
         children = []
-        if bone.children != ():
+        print(bone.children)
+        if bone.children != []:
 
             for c in bone.children:
                 children.append(c.name)
 
-        bonearray.append([ bone.name , matrix ,vector , parent ,children ])
+        else:
+            tip_loc = Vector(bone.tail) * props.scale
+            tip_name = bone.name + '_tip'
+            tip_name = tip_name.replace('.' , '_')
+            #tip_matrix = 
+            tip_parent = bone.name
+            result0 = get_bonedata( v , tip_loc , matrix )
+            bonearray.append([ tip_name, result0[0] ,result0[1] , tip_parent ,[] ])
 
+
+        #bonearray.append([ bone.name , matrix ,vector , parent ,children ])
+        bonearray.append([ bone.name.replace('.' , '_') , result[0] ,result[1] , parent ,children ])
+
+    for b in bonearray:
+        print(b)
     export_pcl(filename , bonearray)
     bpy.ops.object.mode_set(mode='OBJECT')
 
