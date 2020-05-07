@@ -786,6 +786,14 @@ def export_format(mode):
 
     if props.export_option == 'sel':
         outpath += '%s.%s' % (correct_name( utils.getActiveObj().name ) , mode)
+        export_cmd(outpath , mode)
+
+    elif props.export_option == 'eachsel':
+        for ob in utils.selected():
+            utils.act(ob)
+            path = '%s%s.%s' % (outpath , correct_name( ob.name ) , mode)
+            export_cmd( path , mode )
+
 
     elif props.export_option == 'col':
         Collections.clear()
@@ -801,6 +809,11 @@ def export_format(mode):
             if ob.users_collection[0].name in Collections: 
                 utils.select(ob,True)
 
+        export_cmd(outpath , mode)
+
+
+def export_cmd(outpath , mode):
+    props = bpy.context.scene.kiaimportexport_props 
 
     forward = props.axis_forward
     up = props.axis_up
