@@ -84,8 +84,8 @@ class KIAIMPORTEXPORT_Props_OA(PropertyGroup):
     export_option : EnumProperty(items= (('sel', 'sel', '選択されたもの'),('eachsel', 'eachsel', 'Export selection to each file'),('col', 'col', 'colコレクション')))
     export_mode : EnumProperty(items= (('def', 'def', 'Default'),('ue', 'ue', 'ForUnrealEngine'),('md', 'md', 'ForMarverousDesigner')))
     fbx_path : StringProperty(name = "path")
-    axis_forward : EnumProperty(items = AXIS , name = 'forward',default = '-Z' )
-    axis_up : EnumProperty(items = AXIS , name = 'up' ,default = 'Y')
+    axis_forward : EnumProperty(items = AXIS , name = 'forward',default = '-Y' )
+    axis_up : EnumProperty(items = AXIS , name = 'up' ,default = 'Z')
 
 
 
